@@ -12,19 +12,25 @@ exports.register = async (req, res) => {
   const { name, email, password, role } = req.body;
 
   try {
-    const existing = await User.findOne({ email });
-    if (existing) return res.status(400).json({ message: 'Email already registered' });
+    const existing = await User.findOne({ email: email.toLowerCase() });
+    if (existing) {
+      return res.status(400).json({ message: 'Email already registered' });
+    }
 
-    await TempUser.deleteMany({ email });
-    await Otp.deleteMany({}); // Clean up old OTPs
+    await TempUser.deleteMany({ email: email.toLowerCase() });
+    await Otp.deleteMany({}); // Optional: clear all old OTPs
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const tempUser = await TempUser.create({ name, email, password: hashedPassword, role });
+    const tempUser = await TempUser.create({
+      name,
+      email: email.toLowerCase(),
+      password: hashedPassword,
+      role,
+    });
 
     const otp = crypto.randomInt(100000, 999999).toString();
     await Otp.create({ userId: tempUser._id, otp });
 
-    // Send OTP via email
     await sendEmail(
       email,
       'Your OTP Code',
@@ -36,7 +42,7 @@ exports.register = async (req, res) => {
       tempUserId: tempUser._id,
     });
   } catch (err) {
-    console.error(err);
+    console.error('Registration error:', err);
     res.status(500).json({ message: 'Something went wrong during registration' });
   }
 };
@@ -47,10 +53,14 @@ exports.verifyOtp = async (req, res) => {
 
   try {
     const validOtp = await Otp.findOne({ userId, otp });
-    if (!validOtp) return res.status(400).json({ message: 'Invalid or expired OTP' });
+    if (!validOtp) {
+      return res.status(400).json({ message: 'Invalid or expired OTP' });
+    }
 
     const tempUser = await TempUser.findById(userId);
-    if (!tempUser) return res.status(404).json({ message: 'Temporary user not found' });
+    if (!tempUser) {
+      return res.status(404).json({ message: 'Temporary user not found' });
+    }
 
     const newUser = await User.create({
       name: tempUser.name,
@@ -65,7 +75,6 @@ exports.verifyOtp = async (req, res) => {
     newUser.refreshToken = refreshToken;
     await newUser.save();
 
-    // Cleanup
     await TempUser.deleteOne({ _id: userId });
     await Otp.deleteMany({ userId });
 
@@ -76,19 +85,30 @@ exports.verifyOtp = async (req, res) => {
       user: newUser,
     });
   } catch (err) {
-    console.error(err);
+    console.error('OTP verification error:', err);
     res.status(500).json({ message: 'Something went wrong during verification' });
   }
 };
 
-// Login
+// LOGIN
 exports.login = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const user = await User.findOne({ email });
-    if (!user || !(await bcrypt.compare(password, user.password)))
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
+      console.log('Login failed: user not found');
       return res.status(400).json({ message: 'Invalid credentials' });
+    }
+      console.log('Password entered:', password);
+    console.log('Password stored (hashed):', user.password);
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    console.log('Password match:', isMatch);
+
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Invalid credentials' });
+    }
 
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
@@ -98,21 +118,24 @@ exports.login = async (req, res) => {
 
     res.json({ accessToken, refreshToken, user });
   } catch (err) {
-    console.error(err);
+    console.error('Login error:', err);
     res.status(500).json({ message: 'Login failed' });
   }
 };
 
-// Refresh Token
+// REFRESH TOKEN
 exports.refreshToken = async (req, res) => {
   const { refreshToken } = req.body;
-  if (!refreshToken) return res.status(401).json({ message: 'Missing refresh token' });
+  if (!refreshToken) {
+    return res.status(401).json({ message: 'Missing refresh token' });
+  }
 
   try {
     const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
     const user = await User.findById(decoded.id);
-    if (!user || user.refreshToken !== refreshToken)
+    if (!user || user.refreshToken !== refreshToken) {
       return res.status(403).json({ message: 'Invalid refresh token' });
+    }
 
     const newAccessToken = generateAccessToken(user);
     const newRefreshToken = generateRefreshToken(user);
@@ -122,11 +145,12 @@ exports.refreshToken = async (req, res) => {
 
     res.json({ accessToken: newAccessToken, refreshToken: newRefreshToken });
   } catch (err) {
+    console.error('Refresh token error:', err);
     res.status(403).json({ message: 'Invalid or expired refresh token' });
   }
 };
 
-// Logout
+// LOGOUT
 exports.logout = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
@@ -137,6 +161,7 @@ exports.logout = async (req, res) => {
 
     res.json({ message: 'Logged out successfully' });
   } catch (err) {
+    console.error('Logout error:', err);
     res.status(500).json({ message: 'Logout failed' });
   }
 };
