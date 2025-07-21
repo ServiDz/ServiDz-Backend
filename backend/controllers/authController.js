@@ -28,7 +28,7 @@ exports.register = async (req, res) => {
       role,
     });
 
-    const otp = crypto.randomInt(100000, 999999).toString();
+    const otp = crypto.randomInt(1000, 9999).toString();
     await Otp.create({ userId: tempUser._id, otp });
 
     await sendEmail(
