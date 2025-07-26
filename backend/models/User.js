@@ -10,6 +10,7 @@ const userSchema = new mongoose.Schema({
     enum: ['user', 'professional', 'admin'],
     default: 'user'
     },
+    avatar: { type: String, default: '' },
     isVerified: { type: Boolean, default: false },
     refreshToken: { type: String }
 

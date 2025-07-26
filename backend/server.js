@@ -9,7 +9,8 @@ const authRoutes = require('./routes/auth');
 const taskerRoutes = require('./routes/taskerRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const chatSocket = require('./sockets/chatSocket');
-const chatController = require('./controllers/ChatController'); // ✅ correct import
+const chatController = require('./controllers/ChatController'); 
+const profileRoutes = require('./routes/profile');
 
 const app = express();
 const server = http.createServer(app);
@@ -42,6 +43,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/taskers', taskerRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/profile', profileRoutes);
 
 // ✅ Start server
 const PORT = process.env.PORT || 5000;
