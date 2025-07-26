@@ -5,7 +5,7 @@ const upload = require('../middleware/cloudinaryUpload');
 
 
 // GET profile
-router.get('/', profileController.getProfile);
+router.post('/', profileController.getProfile);
 
 // PUT edit profile
 router.put('/edit', profileController.editProfile);
