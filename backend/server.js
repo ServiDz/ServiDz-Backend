@@ -26,9 +26,6 @@ const io = socketIo(server, {
   }
 });
 
-// ❌ REMOVE THIS LINE:
-// setSocketIO(io);
-
 // ✅ Correct line
 chatController.setSocketInstance(io); // pass io to controller for edit/delete events
 
