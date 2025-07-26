@@ -6,10 +6,10 @@ const { getMessagesBetweenUsers , getMessages , editMessage, deleteMessage} = re
 router.get('/:user1/:user2', getMessagesBetweenUsers);
 router.post('/getMessages', getMessages);
 
-// New: Edit message
+// ✅ PUT: Edit a message
 router.put('/editMessage/:messageId', editMessage);
 
-// New: Delete message
-router.delete('/deleteMessage/:messageId',deleteMessage);
+// ✅ DELETE: Delete a message
+router.delete('/deleteMessage/:messageId', deleteMessage);
 
 module.exports = router;

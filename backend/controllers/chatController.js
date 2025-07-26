@@ -1,11 +1,9 @@
+// ✅ chatController.js
+
 const Message = require('../models/Message');
+let io ; // <-- store the socket instance
 
-let io = null; // This will be set from server.js
-
-// Set the io instance
-const setSocketIO = (ioInstance) => {
-  io = ioInstance;
-};
+// ✅ Set Socket.IO instance
 
 // ✅ Get all messages between two users (for Socket.IO or real-time usage)
 const getMessagesBetweenUsers = async (req, res) => {
@@ -88,9 +86,13 @@ const deleteMessage = async (req, res) => {
   }
 };
 
-// 🟢 Export
+const setSocketInstance = (ioInstance) => {
+  io = ioInstance;
+};
+
+
 module.exports = {
-  setSocketIO,
+  setSocketInstance,
   getMessagesBetweenUsers,
   getMessages,
   editMessage,

@@ -9,35 +9,41 @@ const authRoutes = require('./routes/auth');
 const taskerRoutes = require('./routes/taskerRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const chatSocket = require('./sockets/chatSocket');
-const { setSocketIO } = require('./controllers/ChatController'); // ✅ add this
+const chatController = require('./controllers/ChatController'); // ✅ correct import
 
 const app = express();
-const server = http.createServer(app); // ✅ HTTP server
+const server = http.createServer(app);
 
-// Connect to MongoDB
+// ✅ Connect to MongoDB
 connectDB();
 
-// Attach socket.io to the server
+// ✅ Attach socket.io to the server
 const io = socketIo(server, {
   cors: {
-    origin: "*", // Replace with actual domain in production
+    origin: "*", // Adjust this in production
     methods: ["GET", "POST"]
   }
 });
 
-setSocketIO(io); // ✅ allow controller to emit socket events
-chatSocket(io);  // ✅ setup socket event handlers
+// ❌ REMOVE THIS LINE:
+// setSocketIO(io);
 
-// Middleware
+// ✅ Correct line
+chatController.setSocketInstance(io); // pass io to controller for edit/delete events
+
+// ✅ Attach socket handlers
+chatSocket(io);
+
+// ✅ Middlewares
 app.use(cors());
 app.use(express.json());
 
-// Routes
+// ✅ Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/taskers', taskerRoutes);
 app.use('/api/chat', chatRoutes);
 
-// Start server
+// ✅ Start server
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Server running on http://0.0.0.0:${PORT}`);
