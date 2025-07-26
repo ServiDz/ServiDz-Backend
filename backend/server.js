@@ -9,7 +9,7 @@ const authRoutes = require('./routes/auth');
 const taskerRoutes = require('./routes/taskerRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const chatSocket = require('./sockets/chatSocket');
-const { setSocketIO } = require('./controllers/chatController'); // ✅ add this
+const { setSocketIO } = require('./controllers/ChatController'); // ✅ add this
 
 const app = express();
 const server = http.createServer(app); // ✅ HTTP server
