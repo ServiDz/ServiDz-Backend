@@ -8,10 +8,10 @@ const User = require('../models/User'); // ✅ Import User model
 // @access  Public or Protected (optional)
 const createBooking = async (req, res) => {
   try {
-    const { userId, taskerId, date, time, location } = req.body;
+    const { userId, taskerId, date, time, location , description} = req.body;
 
     // ✅ Validate required fields
-    if (!userId || !taskerId || !date || !time || !location?.latitude || !location?.longitude || !location?.address) {
+    if (!userId || !taskerId || !date || !time || !location?.latitude || !location?.longitude  ) {
       return res.status(400).json({ message: 'All fields including location are required' });
     }
 
@@ -34,6 +34,7 @@ const createBooking = async (req, res) => {
       date,
       time,
       location,
+        description: description, // Optional description
       status: 'pending'
     });
 

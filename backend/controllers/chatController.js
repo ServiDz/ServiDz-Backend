@@ -91,7 +91,7 @@ const setSocketInstance = (ioInstance) => {
 };
 
 
-// ✅ Get chat list for a user (from body)
+//  Get chat list for a user (from body)
 
 
 const getChatList = async (req, res) => {
@@ -188,6 +188,26 @@ const markMessagesAsRead = async (req, res) => {
 };
 
 
+const searchUsersByName = async (req, res) => {
+  const { query } = req.query;
+
+  if (!query || query.trim() === '') {
+    return res.status(400).json({ message: 'Query parameter is required' });
+  }
+
+  try {
+    const results = await Tasker.find({
+      fullName: { $regex: query, $options: 'i' } // case-insensitive partial match
+    }).select('fullName profilePic');
+
+    res.status(200).json(results);
+  } catch (error) {
+    console.error('Search error:', error);
+    res.status(500).json({ message: 'Server error while searching users' });
+  }
+};
+
+
 module.exports = {
   setSocketInstance,
   getMessagesBetweenUsers,
@@ -195,5 +215,6 @@ module.exports = {
   editMessage,
   deleteMessage,
   getChatList,
-  markMessagesAsRead
+  markMessagesAsRead,
+  searchUsersByName
 };
