@@ -12,6 +12,9 @@ const chatController = require('./controllers/chatController');
 const profileRoutes = require('./routes/profile');
 const bookingRoutes = require('./routes/bookingRoutes');
 const taskerAuthRoutes = require('./routes/taskerAuth');
+const taskerProfileRoutes = require("./routes/taskerProfileRoute");
+
+
 
 
 const app = express();
@@ -45,6 +48,9 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/tasker/auth', taskerAuthRoutes);
+app.use("/api/tasker", taskerProfileRoutes);
+
+
 
 // ✅ Start server
 const PORT = process.env.PORT || 5000;
