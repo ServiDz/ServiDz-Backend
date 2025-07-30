@@ -6,6 +6,8 @@ const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { generateAccessToken, generateRefreshToken } = require('../utils/jwt');
 const sendEmail = require('../utils/sendEmail');
+const TempTasker = require('../models/TempTasker');
+const Tasker = require('../models/Tasker');
 
 // STEP 1: Register — store temp user & send OTP
 exports.register = async (req, res) => {
@@ -49,7 +51,7 @@ exports.register = async (req, res) => {
 
 // STEP 2: Verify OTP — create real user
 exports.verifyOtp = async (req, res) => {
-  const { userId, otp } = req.body;
+  const { userId, otp, role } = req.body;
 
   try {
     const validOtp = await Otp.findOne({ userId, otp });
@@ -57,17 +59,37 @@ exports.verifyOtp = async (req, res) => {
       return res.status(400).json({ message: 'Invalid or expired OTP' });
     }
 
-    const tempUser = await TempUser.findById(userId);
-    if (!tempUser) {
-      return res.status(404).json({ message: 'Temporary user not found' });
+    // Determine temp and final model
+    const TempModel = role === 'tasker' ? TempTasker : TempUser;
+    const Model = role === 'tasker' ? Tasker : User;
+
+    const temp = await TempModel.findById(userId);
+    if (!temp) {
+      return res.status(404).json({ message: `Temporary ${role} not found` });
     }
 
-    const newUser = await User.create({
-      name: tempUser.name,
-      email: tempUser.email,
-      password: tempUser.password,
-      role: tempUser.role,
-    });
+    let newUserData;
+
+    if (role === 'tasker') {
+      newUserData = {
+        fullName: temp.fullName,
+        phone: temp.phone,
+        location: temp.location,
+        profession: temp.profession,
+        email: temp.email,
+        password: temp.password,
+        role: temp.role,
+      };
+    } else {
+      newUserData = {
+        name: temp.name,
+        email: temp.email,
+        password: temp.password,
+        role: temp.role,
+      };
+    }
+
+    const newUser = await Model.create(newUserData);
 
     const accessToken = generateAccessToken(newUser);
     const refreshToken = generateRefreshToken(newUser);
@@ -75,11 +97,12 @@ exports.verifyOtp = async (req, res) => {
     newUser.refreshToken = refreshToken;
     await newUser.save();
 
-    await TempUser.deleteOne({ _id: userId });
+    // Cleanup
+    await TempModel.deleteOne({ _id: userId });
     await Otp.deleteMany({ userId });
 
     res.status(201).json({
-      message: 'User verified and registered successfully',
+      message: `${role.charAt(0).toUpperCase() + role.slice(1)} verified and registered successfully`,
       accessToken,
       refreshToken,
       user: newUser,
@@ -90,17 +113,27 @@ exports.verifyOtp = async (req, res) => {
   }
 };
 
-// LOGIN
+
+
+
+
 exports.login = async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, role } = req.body;
 
   try {
-    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!email || !password || !role) {
+      return res.status(400).json({ message: 'Email, password, and role are required' });
+    }
+
+    const model = role === 'tasker' ? Tasker : User;
+
+    const user = await model.findOne({ email: email.toLowerCase() });
     if (!user) {
       console.log('Login failed: user not found');
       return res.status(400).json({ message: 'Invalid credentials' });
     }
-      console.log('Password entered:', password);
+
+    console.log('Password entered:', password);
     console.log('Password stored (hashed):', user.password);
 
     const isMatch = await bcrypt.compare(password, user.password);
@@ -116,12 +149,13 @@ exports.login = async (req, res) => {
     user.refreshToken = refreshToken;
     await user.save();
 
-    res.json({ accessToken, refreshToken, user });
+    res.json({ success: true, accessToken, refreshToken, user });
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ message: 'Login failed' });
   }
 };
+
 
 // REFRESH TOKEN
 exports.refreshToken = async (req, res) => {

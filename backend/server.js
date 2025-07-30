@@ -4,7 +4,6 @@ const connectDB = require('./config/db');
 const cors = require('cors');
 const http = require('http');
 const socketIo = require('socket.io');
-
 const authRoutes = require('./routes/auth');
 const taskerRoutes = require('./routes/taskerRoutes');
 const chatRoutes = require('./routes/chatRoutes');
@@ -12,6 +11,8 @@ const chatSocket = require('./sockets/chatSocket');
 const chatController = require('./controllers/chatController'); 
 const profileRoutes = require('./routes/profile');
 const bookingRoutes = require('./routes/bookingRoutes');
+const taskerAuthRoutes = require('./routes/taskerAuth');
+
 
 const app = express();
 const server = http.createServer(app);
@@ -43,6 +44,7 @@ app.use('/api/taskers', taskerRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/bookings', bookingRoutes);
+app.use('/api/tasker/auth', taskerAuthRoutes);
 
 // ✅ Start server
 const PORT = process.env.PORT || 5000;
