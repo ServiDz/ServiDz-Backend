@@ -8,7 +8,8 @@ const { generateAccessToken, generateRefreshToken } = require('../utils/jwt');
 const sendEmail = require('../utils/sendEmail');
 const TempTasker = require('../models/TempTasker');
 const Tasker = require('../models/Tasker');
-const { sendNotification } = require('../utils/fcm'); // ✅ import
+const { sendNotification } = require('../utils/fcm');
+const Notification = require('../models/Notification'); // ✅ Added
 
 // STEP 1: Register — store temp user & send OTP
 exports.register = async (req, res) => {
@@ -69,7 +70,6 @@ exports.verifyOtp = async (req, res) => {
     }
 
     let newUserData;
-
     if (role === 'tasker') {
       newUserData = {
         fullName: temp.fullName,
@@ -100,13 +100,20 @@ exports.verifyOtp = async (req, res) => {
     await TempModel.deleteOne({ _id: userId });
     await Otp.deleteMany({ userId });
 
-    // ✅ Send welcome notification if fcmToken exists
+    // ✅ Send welcome notification and store it
     if (newUser.fcmToken) {
-      await sendNotification(
-        newUser.fcmToken,
-        '🎉 Welcome to ServiDZ',
-        'Your account has been created successfully!'
-      );
+      const title = '🎉 Welcome to ServiDZ';
+      const body = 'Your account has been created successfully!';
+
+      await sendNotification(newUser.fcmToken, title, body);
+
+      await Notification.create({
+        userId: newUser._id,
+        userModel: role === 'tasker' ? 'Tasker' : 'User',
+        title,
+        body,
+        type: 'welcome'
+      });
     }
 
     res.status(201).json({
@@ -146,20 +153,26 @@ exports.login = async (req, res) => {
     const refreshToken = generateRefreshToken(user);
 
     user.refreshToken = refreshToken;
-
     if (fcmToken) {
       user.fcmToken = fcmToken;
     }
 
     await user.save();
 
-    // ✅ Send welcome notification
+    // ✅ Send welcome notification and store it
     if (user.fcmToken) {
-      await sendNotification(
-        user.fcmToken,
-        '👋 Welcome Back to ServiDZ',
-        'We’re glad to see you again!'
-      );
+      const title = '👋 Welcome Back to ServiDZ';
+      const body = 'We’re glad to see you again!';
+
+      await sendNotification(user.fcmToken, title, body);
+
+      await Notification.create({
+        userId: user._id,
+        userModel: role === 'tasker' ? 'Tasker' : 'User',
+        title,
+        body,
+        type: 'login'
+      });
     }
 
     res.json({ success: true, accessToken, refreshToken, user });

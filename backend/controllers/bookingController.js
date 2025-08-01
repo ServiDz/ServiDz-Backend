@@ -1,8 +1,8 @@
-// controllers/bookingController.js
 const Booking = require('../models/Booking');
 const Tasker = require('../models/Tasker');
-const User = require('../models/User'); // ✅ Import User model
-const { sendNotification } = require('../utils/fcm'); // ✅ Import notification sender
+const User = require('../models/User');
+const Notification = require('../models/Notification'); // ✅ Import Notification model
+const { sendNotification } = require('../utils/fcm');   // ✅ Import notification sender
 
 // @desc    Create a new booking
 // @route   POST /api/bookings
@@ -41,13 +41,36 @@ const createBooking = async (req, res) => {
 
     await booking.save();
 
-    // ✅ Send notification to the tasker
+    // ✅ Send and store notification to tasker
     if (tasker.fcmToken) {
-      await sendNotification(
-        tasker.fcmToken,
-        '📩 New Booking Request',
-        `${user.name || 'A user'} booked your service on ${date} at ${time}.`
-      );
+      const title = '📩 New Booking Request';
+      const body = `${user.name || 'A user'} booked your service on ${date} at ${time}.`;
+
+      await sendNotification(tasker.fcmToken, title, body);
+
+      await Notification.create({
+        userId: tasker._id,
+        userModel: 'Tasker',
+        title,
+        body,
+        type: 'booking'
+      });
+    }
+
+    // ✅ Send and store confirmation notification to user
+    if (user.fcmToken) {
+      const title = '✅ Booking Submitted';
+      const body = `You’ve successfully booked ${tasker.fullName || 'a tasker'} on ${date} at ${time}. Please wait for their response.`;
+
+      await sendNotification(user.fcmToken, title, body);
+
+      await Notification.create({
+        userId: user._id,
+        userModel: 'User',
+        title,
+        body,
+        type: 'booking'
+      });
     }
 
     res.status(201).json(booking);
