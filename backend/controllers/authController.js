@@ -8,6 +8,7 @@ const { generateAccessToken, generateRefreshToken } = require('../utils/jwt');
 const sendEmail = require('../utils/sendEmail');
 const TempTasker = require('../models/TempTasker');
 const Tasker = require('../models/Tasker');
+const { sendNotification } = require('../utils/fcm'); // ✅ import
 
 // STEP 1: Register — store temp user & send OTP
 exports.register = async (req, res) => {
@@ -59,7 +60,6 @@ exports.verifyOtp = async (req, res) => {
       return res.status(400).json({ message: 'Invalid or expired OTP' });
     }
 
-    // Determine temp and final model
     const TempModel = role === 'tasker' ? TempTasker : TempUser;
     const Model = role === 'tasker' ? Tasker : User;
 
@@ -97,9 +97,17 @@ exports.verifyOtp = async (req, res) => {
     newUser.refreshToken = refreshToken;
     await newUser.save();
 
-    // Cleanup
     await TempModel.deleteOne({ _id: userId });
     await Otp.deleteMany({ userId });
+
+    // ✅ Send welcome notification if fcmToken exists
+    if (newUser.fcmToken) {
+      await sendNotification(
+        newUser.fcmToken,
+        '🎉 Welcome to ServiDZ',
+        'Your account has been created successfully!'
+      );
+    }
 
     res.status(201).json({
       message: `${role.charAt(0).toUpperCase() + role.slice(1)} verified and registered successfully`,
@@ -113,12 +121,9 @@ exports.verifyOtp = async (req, res) => {
   }
 };
 
-
-
-
-
+// LOGIN
 exports.login = async (req, res) => {
-  const { email, password, role } = req.body;
+  const { email, password, role, fcmToken } = req.body;
 
   try {
     if (!email || !password || !role) {
@@ -126,19 +131,13 @@ exports.login = async (req, res) => {
     }
 
     const model = role === 'tasker' ? Tasker : User;
-
     const user = await model.findOne({ email: email.toLowerCase() });
+
     if (!user) {
-      console.log('Login failed: user not found');
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    console.log('Password entered:', password);
-    console.log('Password stored (hashed):', user.password);
-
     const isMatch = await bcrypt.compare(password, user.password);
-    console.log('Password match:', isMatch);
-
     if (!isMatch) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
@@ -147,7 +146,21 @@ exports.login = async (req, res) => {
     const refreshToken = generateRefreshToken(user);
 
     user.refreshToken = refreshToken;
+
+    if (fcmToken) {
+      user.fcmToken = fcmToken;
+    }
+
     await user.save();
+
+    // ✅ Send welcome notification
+    if (user.fcmToken) {
+      await sendNotification(
+        user.fcmToken,
+        '👋 Welcome Back to ServiDZ',
+        'We’re glad to see you again!'
+      );
+    }
 
     res.json({ success: true, accessToken, refreshToken, user });
   } catch (err) {
@@ -155,7 +168,6 @@ exports.login = async (req, res) => {
     res.status(500).json({ message: 'Login failed' });
   }
 };
-
 
 // REFRESH TOKEN
 exports.refreshToken = async (req, res) => {

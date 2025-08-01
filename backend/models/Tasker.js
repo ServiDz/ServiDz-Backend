@@ -14,7 +14,9 @@ const taskerSchema = new mongoose.Schema({
   profilePic: { type: String },
   description: { type: String },
   refreshToken: { type: String },                       
-  createdAt: { type: Date, default: Date.now }
+  createdAt: { type: Date, default: Date.now },
+  fcmToken: { type: String },
+
 });
 
 module.exports = mongoose.model('Tasker', taskerSchema);
