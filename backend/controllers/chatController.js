@@ -4,7 +4,6 @@ let io ; //
 const User = require('../models/User'); 
 const Tasker = require('../models/Tasker'); // Assuming you have a Tasker model
 
-
 // ✅ Get all messages between two users (for Socket.IO or real-time usage)
 const getMessagesBetweenUsers = async (req, res) => {
   const { user1, user2 } = req.params;
