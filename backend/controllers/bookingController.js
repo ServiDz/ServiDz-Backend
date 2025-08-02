@@ -1,12 +1,11 @@
 const Booking = require('../models/Booking');
 const Tasker = require('../models/Tasker');
 const User = require('../models/User');
-const Notification = require('../models/Notification'); // ✅ Import Notification model
-const { sendNotification } = require('../utils/fcm');   // ✅ Import notification sender
+const Notification = require('../models/Notification');
+const { sendNotification } = require('../utils/fcm');
 
 // @desc    Create a new booking
 // @route   POST /api/bookings
-// @access  Public or Protected (optional)
 const createBooking = async (req, res) => {
   try {
     const { userId, taskerId, date, time, location, description } = req.body;
@@ -18,70 +17,153 @@ const createBooking = async (req, res) => {
 
     // ✅ Check if user exists
     const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
+    if (!user) return res.status(404).json({ message: 'User not found' });
 
     // ✅ Check if tasker exists
     const tasker = await Tasker.findById(taskerId);
-    if (!tasker) {
-      return res.status(404).json({ message: 'Tasker not found' });
-    }
+    if (!tasker) return res.status(404).json({ message: 'Tasker not found' });
 
     // ✅ Create booking
-    const booking = new Booking({
+    const booking = await Booking.create({
       userId,
       taskerId,
       date,
       time,
       location,
       description,
-      status: 'pending'
+      status: 'pending',
     });
 
-    await booking.save();
-
-    // ✅ Send and store notification to tasker
+    // ✅ Send notification to tasker
     if (tasker.fcmToken) {
       const title = '📩 New Booking Request';
       const body = `${user.name || 'A user'} booked your service on ${date} at ${time}.`;
 
       await sendNotification(tasker.fcmToken, title, body);
-
       await Notification.create({
         userId: tasker._id,
         userModel: 'Tasker',
         title,
         body,
-        type: 'booking'
+        type: 'booking',
       });
     }
 
-    // ✅ Send and store confirmation notification to user
+    // ✅ Send confirmation notification to user
     if (user.fcmToken) {
       const title = '✅ Booking Submitted';
-      const body = `You’ve successfully booked ${tasker.fullName || 'a tasker'} on ${date} at ${time}. Please wait for their response.`;
+      const body = `You’ve successfully booked ${tasker.fullName || 'a tasker'} on ${date} at ${time}.`;
 
       await sendNotification(user.fcmToken, title, body);
-
       await Notification.create({
         userId: user._id,
         userModel: 'User',
         title,
         body,
-        type: 'booking'
+        type: 'booking',
       });
     }
 
-    res.status(201).json(booking);
+    // ✅ Populate user fields (e.g., name and avatar)
+    const populatedBooking = await Booking.findById(booking._id)
+      .populate('userId', 'name avatar') // 🧠 include only what you need
+      .populate('taskerId', 'fullName');
+
+    res.status(201).json(populatedBooking);
   } catch (error) {
     console.error('Booking creation failed:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 };
 
-// @desc    Get all bookings by user ID
-// @route   GET /api/bookings/user/:userId
+
+
+// acce^pt booking 
+
+// @desc    Accept a booking
+// @route   PATCH /api/bookings/:id/accept
+const acceptBooking = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const booking = await Booking.findById(id)
+      .populate('userId', 'name avatar fcmToken')
+      .populate('taskerId', 'fullName');
+
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    booking.status = 'accepted';
+    await booking.save();
+
+    // ✅ Notify user
+    const title = '✅ Booking Accepted';
+    const body = `Your booking for ${booking.date} at ${booking.time} was accepted by ${booking.taskerId.fullName}.`;
+
+    if (booking.userId.fcmToken) {
+      await sendNotification(booking.userId.fcmToken, title, body);
+    }
+
+    await Notification.create({
+      userId: booking.userId._id,
+      userModel: 'User',
+      title,
+      body,
+      type: 'booking'
+    });
+
+    res.status(200).json({ message: 'Booking accepted', booking });
+  } catch (error) {
+    console.error('Accept booking failed:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+
+//reject booking
+
+// @desc    Reject a booking
+// @route   PATCH /api/bookings/:id/reject
+const rejectBooking = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const booking = await Booking.findById(id)
+      .populate('userId', 'name avatar fcmToken')
+      .populate('taskerId', 'fullName');
+
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    booking.status = 'rejected';
+    await booking.save();
+
+    // ✅ Notify user
+    const title = '❌ Booking Rejected';
+    const body = `Your booking for ${booking.date} at ${booking.time} was rejected by ${booking.taskerId.fullName}.`;
+
+    if (booking.userId.fcmToken) {
+      await sendNotification(booking.userId.fcmToken, title, body);
+    }
+
+    await Notification.create({
+      userId: booking.userId._id,
+      userModel: 'User',
+      title,
+      body,
+      type: 'booking'
+    });
+
+    res.status(200).json({ message: 'Booking rejected', booking });
+  } catch (error) {
+    console.error('Reject booking failed:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+
 const getBookingsByUserId = async (req, res) => {
   const { userId } = req.params;
   try {
@@ -92,7 +174,28 @@ const getBookingsByUserId = async (req, res) => {
   }
 };
 
+
+const getTaskerBookings = async (req, res) => {
+  try {
+    const taskerId = req.params.taskerId.trim(); 
+
+    // Fetch all bookings for the tasker and populate user info
+    const bookings = await Booking.find({ taskerId })
+      .populate('userId', 'name avatar')  // 👈 Only fetch name and avatar of user
+      .sort({ createdAt: -1 }); // optional: newest first
+
+    res.status(200).json(bookings);
+  } catch (error) {
+    console.error('Failed to fetch tasker bookings:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+
 module.exports = {
   createBooking,
-  getBookingsByUserId
+  getBookingsByUserId,
+  acceptBooking,
+  rejectBooking,
+  getTaskerBookings
 };
