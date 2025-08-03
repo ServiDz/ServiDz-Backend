@@ -39,11 +39,11 @@ chatController.setSocketInstance(io); // pass io to controller for edit/delete e
 // ✅ Attach socket handlers
 chatSocket(io);
 
-// ✅ Middlewares
+//  Middlewares
 app.use(cors());
 app.use(express.json());
 
-// ✅ Routes
+//  Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/taskers', taskerRoutes);
 app.use('/api/chat', chatRoutes);
@@ -56,7 +56,7 @@ app.use('/api/tasker-messages', taskerMessagesRoutes);
 
 
 
-// ✅ Start server
+// Start server
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Server running on http://0.0.0.0:${PORT}`);

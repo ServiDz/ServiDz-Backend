@@ -3,6 +3,8 @@ const router = express.Router();
 const upload = require("../middleware/cloudinaryUpload");
 const taskerProfileController = require("../controllers/taskerProfileController");
 const { updateTaskerAvatar } = require("../controllers/taskerProfileController");
+
+
 // GET Tasker profile
 router.post("/profile", taskerProfileController.getTaskerProfile);
 
@@ -11,5 +13,17 @@ router.put("/profile/edit", taskerProfileController.editTaskerProfile);
 
 // Upload Tasker avatar
 router.put('/update-avatar', upload.single('image'), updateTaskerAvatar);
+
+router.post(
+  '/upload',
+  upload.single('certificate'),
+  taskerProfileController.uploadCertificate
+);
+
+router.post(
+  "/certifications",
+  taskerProfileController.getTaskerCertifications
+);
+
 
 module.exports = router;

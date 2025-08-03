@@ -1,5 +1,6 @@
 const Tasker = require("../models/Tasker");
 
+
 // GET /api/tasker/profile
 exports.getTaskerProfile = async (req, res) => {
     const { taskerId } = req.body;
@@ -11,7 +12,7 @@ exports.getTaskerProfile = async (req, res) => {
         res.status(200).json({ success: true, tasker });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ success: false, message: "Server error" });
+            res.json({ message: error.message })
     }
 };
 
@@ -65,5 +66,65 @@ exports.updateTaskerAvatar = async (req, res) => {
     } catch (err) {
         console.error("Error uploading profile picture:", err);
         res.status(500).json({ success: false, message: "Server error while uploading profile picture" });
+    }
+};
+
+
+exports.uploadCertificate = async (req, res) => {
+  try {
+    const { taskerId, description } = req.body;
+    const file = req.file;
+
+    if (!taskerId || !file) {
+      return res.status(400).json({ message: 'Missing taskerId or file' });
+    }
+
+    const newCertificate = {
+      filePath: file.path,
+      description,
+      uploadedAt: new Date(),
+    };
+
+    const updatedTasker = await Tasker.findByIdAndUpdate(
+      taskerId,
+      { $push: { certifications: newCertificate } },
+      { new: true }
+    );
+
+    if (!updatedTasker) {
+      return res.status(404).json({ message: 'Tasker not found' });
+    }
+
+    res.status(200).json({
+      message: 'Certificate uploaded and added successfully',
+      certifications: updatedTasker.certifications,
+    });
+  } catch (error) {
+    console.error('Upload error:', error); // ✅ proper logging
+
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+
+// GET /api/tasker/certifications
+exports.getTaskerCertifications = async (req, res) => {
+    const { taskerId } = req.body;
+
+    try {
+    if (!taskerId) {
+        return res.status(400).json({ success: false, message: "Missing taskerId" });
+    }
+
+    const tasker = await Tasker.findById(taskerId).select("certifications");
+
+    if (!tasker) {
+        return res.status(404).json({ success: false, message: "Tasker not found" });
+    }
+
+    res.status(200).json({ success: true, certifications: tasker.certifications });
+    } catch (error) {
+    console.error("Error fetching certifications:", error);
+    res.status(500).json({ success: false, message: "Server error" });
     }
 };

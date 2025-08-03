@@ -10,7 +10,14 @@ const taskerSchema = new mongoose.Schema({
   phone: { type: String, required: true },
   rating: { type: Number, default: 0 },
   isAvailable: { type: Boolean, default: true },
-  certification: { type: String },
+  certifications: [
+  {
+    filePath: { type: String},
+    description: { type: String },
+    uploadedAt: { type: Date, default: Date.now },
+  }
+],
+
   profilePic: { type: String },
   description: { type: String },
   refreshToken: { type: String },                       
