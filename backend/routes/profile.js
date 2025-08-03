@@ -13,4 +13,7 @@ router.put('/edit', profileController.editProfile);
 // POST upload avatar (file via form-data)
 router.post('/upload-avatar', upload.single('avatar'), profileController.uploadAvatarToCloudinary);
 
+// POST update phone number
+router.post('/update-phone', profileController.updatePhoneNumber);
+
 module.exports = router;

@@ -1,4 +1,5 @@
 const User = require("../models/User");
+const validator = require('validator');
 
 // GET /api/profile
 exports.getProfile = async (req, res) => {
@@ -65,5 +66,38 @@ exports.uploadAvatarToCloudinary = async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).json({ success: false, message: "Failed to upload avatar" });
+    }
+};
+
+exports.updatePhoneNumber = async (req, res) => {
+    try {
+    const { userId, phone } = req.body;
+
+    if (!userId || !phone) {
+        return res.status(400).json({ message: 'userId and phone are required' });
+    }
+
+    // Remove all non-digit characters
+    const cleanedPhone = phone.replace(/\D/g, '');
+
+    // Validate: must be exactly 10 digits
+    if (!validator.isLength(cleanedPhone, { min: 10, max: 10 })) {
+      return res.status(400).json({ message: 'Phone number must be exactly 10 digits' });
+    }
+
+    const user = await User.findByIdAndUpdate(
+        userId,
+        { phone: cleanedPhone },
+        { new: true }
+    );
+
+    if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.status(200).json({ message: 'Phone number updated successfully', user });
+    } catch (error) {
+    console.error('Error updating phone number:', error);
+    res.status(500).json({ message: 'Internal server error' });
     }
 };

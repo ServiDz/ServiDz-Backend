@@ -3,9 +3,10 @@ const Tasker = require('../models/Tasker');
 const User = require('../models/User');
 const Notification = require('../models/Notification');
 const { sendNotification } = require('../utils/fcm');
+const mongoose = require('mongoose');
 
-// @desc    Create a new booking
-// @route   POST /api/bookings
+
+//  POST /api/bookings
 const createBooking = async (req, res) => {
   try {
     const { userId, taskerId, date, time, location, description } = req.body;
@@ -192,10 +193,57 @@ const getTaskerBookings = async (req, res) => {
 };
 
 
+// @desc    Get the next accepted job for a tasker
+// @route   POST /api/bookings/next-job
+const getNextJob = async (req, res) => {
+  const { taskerId } = req.body;
+
+  if (!taskerId) {
+    return res.status(400).json({ message: 'taskerId is required' });
+  }
+
+  try {
+    const now = new Date();
+
+    // Fetch all accepted bookings for this tasker
+    const bookings = await Booking.find({
+      taskerId,
+      status: 'accepted',
+    }).populate('userId', 'name avatar phone');
+
+    console.log("📦 Accepted bookings (raw):", bookings.length);
+
+    // Filter bookings where the string date (when converted to Date) is in the future
+    const futureBookings = bookings.filter((booking) => {
+      const bookingDate = new Date(booking.date); // convert string to Date
+      return bookingDate >= now;
+    });
+
+    console.log("📅 Future accepted bookings:", futureBookings.length);
+
+    // Sort the future bookings by date ascending
+    futureBookings.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    if (futureBookings.length === 0) {
+      return res.status(404).json({ message: 'No upcoming job found' });
+    }
+
+    const nextJob = futureBookings[0];
+
+    res.status(200).json({ nextJob });
+  } catch (error) {
+    console.error('❌ Error getting next job:', error);
+    res.status(500).json({ message: 'Server error while fetching next job' });
+  }
+};
+
+
+
 module.exports = {
   createBooking,
   getBookingsByUserId,
   acceptBooking,
   rejectBooking,
-  getTaskerBookings
+  getTaskerBookings,
+  getNextJob
 };
