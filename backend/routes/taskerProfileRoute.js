@@ -26,4 +26,7 @@ router.post(
 );
 
 
+// Update availability route
+router.put('/update-availability', taskerProfileController.updateAvailability);
+
 module.exports = router;

@@ -128,3 +128,31 @@ exports.getTaskerCertifications = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
     }
 };
+
+exports.updateAvailability = async (req, res) => {
+  try {
+    const { taskerId, isAvailable } = req.body;
+
+    if (typeof isAvailable !== 'boolean') {
+      return res.status(400).json({ message: 'isAvailable must be a boolean' });
+    }
+
+    const updatedTasker = await Tasker.findByIdAndUpdate(
+      taskerId,
+      { isAvailable },
+      { new: true }
+    );
+
+    if (!updatedTasker) {
+      return res.status(404).json({ message: 'Tasker not found' });
+    }
+
+    res.status(200).json({
+      message: 'Availability updated successfully',
+      tasker: updatedTasker,
+    });
+  } catch (error) {
+    console.error('Error updating availability:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
