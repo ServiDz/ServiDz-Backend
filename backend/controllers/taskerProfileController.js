@@ -156,3 +156,48 @@ exports.updateAvailability = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
+
+exports.addOrUpdateRating = async (req, res) => {
+  try {
+    const { taskerId, userId, value, review } = req.body;
+
+    if (!taskerId || !userId || value === undefined) {
+      return res.status(400).json({ message: 'taskerId, userId, and value are required' });
+    }
+
+    if (value < 0 || value > 5) {
+      return res.status(400).json({ message: 'Rating must be between 0 and 5' });
+    }
+
+    const tasker = await Tasker.findById(taskerId);
+    if (!tasker) {
+      return res.status(404).json({ message: 'Tasker not found' });
+    }
+
+    // Check if user already rated
+    const existingRating = tasker.ratings.find(r => r.userId.toString() === userId);
+
+    if (existingRating) {
+      existingRating.value = value;
+      existingRating.review = review || existingRating.review; // update if provided
+      existingRating.ratedAt = new Date();
+    } else {
+      tasker.ratings.push({ userId, value, review });
+    }
+
+    // Recalculate average rating
+    const total = tasker.ratings.reduce((sum, r) => sum + r.value, 0);
+    tasker.rating = total / tasker.ratings.length;
+
+    await tasker.save();
+
+    res.status(200).json({
+      message: 'Rating and review submitted successfully',
+      averageRating: tasker.rating,
+      ratingsCount: tasker.ratings.length
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};

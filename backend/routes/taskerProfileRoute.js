@@ -25,8 +25,10 @@ router.post(
   taskerProfileController.getTaskerCertifications
 );
 
-
 // Update availability route
 router.put('/update-availability', taskerProfileController.updateAvailability);
+
+router.post('/rate', taskerProfileController.addOrUpdateRating);
+
 
 module.exports = router;

@@ -8,7 +8,17 @@ const taskerSchema = new mongoose.Schema({
   profession: { type: String, required: true },
   location: { type: String, required: true },
   phone: { type: String, required: true },
-  rating: { type: Number, default: 0 },
+  rating: { type: Number, default: 0 }, // Keep as average rating
+ratings: [
+  {
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    value: { type: Number, required: true },
+    review: { type: String }, // ✅ Add this line
+    ratedAt: { type: Date, default: Date.now }
+  }
+],
+
+
   isAvailable: { type: Boolean, default: true },
   certifications: [
   {
