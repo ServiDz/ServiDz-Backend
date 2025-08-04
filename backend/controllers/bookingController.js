@@ -193,7 +193,6 @@ const getTaskerBookings = async (req, res) => {
 };
 
 
-// @desc    Get the next accepted job for a tasker
 // @route   POST /api/bookings/next-job
 const getNextJob = async (req, res) => {
   const { taskerId } = req.body;
@@ -237,6 +236,67 @@ const getNextJob = async (req, res) => {
   }
 };
 
+const markAsCompleted = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const booking = await Booking.findById(id)
+      .populate('userId', 'name avatar fcmToken')
+      .populate('taskerId', 'fullName');
+
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    booking.status = 'completed';
+    await booking.save();
+
+    const title = '🎉 Booking Completed';
+    const body = `Your booking with ${booking.taskerId.fullName} has been marked as completed.`;
+
+    if (booking.userId.fcmToken) {
+      await sendNotification(booking.userId.fcmToken, title, body);
+    }
+
+    await Notification.create({
+      userId: booking.userId._id,
+      userModel: 'User',
+      title,
+      body,
+      type: 'booking',
+    });
+
+    res.status(200).json({ message: 'Booking marked as completed', booking });
+  } catch (error) {
+    console.error('Mark complete failed:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+const getTaskerBookingSummary = async (req, res) => {
+  try {
+    const { taskerId } = req.params;
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+
+    const upcoming = await Booking.find({
+      taskerId,
+      status: 'accepted',
+      date: { $gte: todayStr }
+    }).populate('userId', 'name avatar');
+
+    const completed = await Booking.find({
+      taskerId,
+      status: 'completed'
+    }).populate('userId', 'name avatar');
+
+    res.status(200).json({ upcoming, completed });
+  } catch (error) {
+    console.error('Error fetching tasker booking summary:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 
 
 module.exports = {
@@ -245,5 +305,7 @@ module.exports = {
   acceptBooking,
   rejectBooking,
   getTaskerBookings,
-  getNextJob
+  getNextJob,
+  markAsCompleted,
+  getTaskerBookingSummary,
 };

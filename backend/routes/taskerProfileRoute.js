@@ -30,5 +30,8 @@ router.put('/update-availability', taskerProfileController.updateAvailability);
 
 router.post('/rate', taskerProfileController.addOrUpdateRating);
 
+router.get('/:taskerId/ratings', taskerProfileController.getTaskerRating);
+
+
 
 module.exports = router;

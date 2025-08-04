@@ -201,3 +201,42 @@ exports.addOrUpdateRating = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+exports.getTaskerRating = async (req, res) => {
+  try {
+    const { taskerId } = req.params;
+
+    const tasker = await Tasker.findById(taskerId)
+      .populate('ratings.userId', 'name avatar'); // ✅ populate reviewer info
+
+    if (!tasker) {
+      return res.status(404).json({ message: 'Tasker not found' });
+    }
+
+    const averageRating = tasker.rating;
+
+    const ratingsWithReviews = tasker.ratings
+      .filter(r => r.review && r.userId) // only include valid reviews
+      .sort((a, b) => new Date(b.ratedAt) - new Date(a.ratedAt)) // ✅ sort newest first
+      .map(r => ({
+        value: r.value,
+        review: r.review,
+        ratedAt: r.ratedAt,
+        user: {
+          _id: r.userId._id,
+          name: r.userId.name,
+          avatar: r.userId.avatar,
+        }
+      }));
+
+    res.status(200).json({
+      taskerId: tasker._id,
+      averageRating,
+      ratingsCount: tasker.ratings.length,
+      reviews: ratingsWithReviews
+    });
+
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
