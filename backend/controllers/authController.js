@@ -149,8 +149,18 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    const accessToken = generateAccessToken(user);
-    const refreshToken = generateRefreshToken(user);
+   const accessToken = generateAccessToken({
+  userId: role === 'user' ? user._id : null,
+  taskerId: role === 'tasker' ? user._id : null,
+  role
+});
+
+const refreshToken = generateRefreshToken({
+  userId: role === 'user' ? user._id : null,
+  taskerId: role === 'tasker' ? user._id : null,
+  role
+});
+
 
     user.refreshToken = refreshToken;
     if (fcmToken) {

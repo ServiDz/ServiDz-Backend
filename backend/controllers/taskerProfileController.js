@@ -3,18 +3,25 @@ const Tasker = require("../models/Tasker");
 
 // GET /api/tasker/profile
 exports.getTaskerProfile = async (req, res) => {
-    const { taskerId } = req.body;
+  try {
+    const { role, taskerId } = req.user;
 
-    try {
-        const tasker = await Tasker.findById(taskerId).select("-password");
-        if (!tasker) return res.status(404).json({ success: false, message: "Tasker not found" });
-
-        res.status(200).json({ success: true, tasker });
-    } catch (err) {
-        console.error(err);
-            res.json({ message: error.message })
+    if (role !== 'tasker' || !taskerId) {
+      return res.status(403).json({ success: false, message: "Unauthorized: Not a tasker" });
     }
+
+    const tasker = await Tasker.findById(taskerId).select('-password');
+    if (!tasker) {
+      return res.status(404).json({ success: false, message: "Tasker not found" });
+    }
+
+    res.status(200).json({ success: true, tasker });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: error.message });
+  }
 };
+
 
 // PUT /api/tasker/profile/edit
 exports.editTaskerProfile = async (req, res) => {

@@ -298,7 +298,6 @@ const getTaskerBookingSummary = async (req, res) => {
 };
 
 
-
 module.exports = {
   createBooking,
   getBookingsByUserId,

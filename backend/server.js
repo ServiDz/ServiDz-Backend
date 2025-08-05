@@ -15,6 +15,8 @@ const taskerAuthRoutes = require('./routes/taskerAuth');
 const taskerProfileRoutes = require("./routes/taskerProfileRoute");
 const notificationRoutes = require('./routes/notificationRoutes');
 const taskerMessagesRoutes = require('./routes/taskerMessages');
+const settingsRoutes = require('./routes/settingsRoutes');
+
 
 
 
@@ -53,6 +55,7 @@ app.use('/api/tasker/auth', taskerAuthRoutes);
 app.use("/api/tasker", taskerProfileRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/tasker-messages', taskerMessagesRoutes);
+app.use('/api/settings', settingsRoutes);
 
 
 
