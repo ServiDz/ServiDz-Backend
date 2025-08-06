@@ -16,5 +16,4 @@ router.get('/:taskerId/summary', getTaskerBookingSummary);
 router.patch('/:id/complete', markAsCompleted);
 
 
-
 module.exports = router;

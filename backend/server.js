@@ -16,6 +16,7 @@ const taskerProfileRoutes = require("./routes/taskerProfileRoute");
 const notificationRoutes = require('./routes/notificationRoutes');
 const taskerMessagesRoutes = require('./routes/taskerMessages');
 const settingsRoutes = require('./routes/settingsRoutes');
+const earningRoutes = require('./routes/earningRoutes');
 
 
 
@@ -56,6 +57,8 @@ app.use("/api/tasker", taskerProfileRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/tasker-messages', taskerMessagesRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/earnings', earningRoutes);
+
 
 
 

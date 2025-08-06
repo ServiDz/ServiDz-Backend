@@ -4,6 +4,7 @@ const User = require('../models/User');
 const Notification = require('../models/Notification');
 const { sendNotification } = require('../utils/fcm');
 const mongoose = require('mongoose');
+const Earning = require('../models/Earning'); // Assuming you have an Earning model for tasker earnings
 
 
 //  POST /api/bookings
@@ -239,6 +240,7 @@ const getNextJob = async (req, res) => {
 const markAsCompleted = async (req, res) => {
   try {
     const { id } = req.params;
+    const { price } = req.body; // 👈 Tasker submits the price here
 
     const booking = await Booking.findById(id)
       .populate('userId', 'name avatar fcmToken')
@@ -248,8 +250,19 @@ const markAsCompleted = async (req, res) => {
       return res.status(404).json({ message: 'Booking not found' });
     }
 
+    if (!price) {
+      return res.status(400).json({ message: 'Price is required to complete the booking' });
+    }
+
     booking.status = 'completed';
     await booking.save();
+
+    // 💰 Create an earning document for the tasker
+    await Earning.create({
+      taskerId: booking.taskerId._id,
+      bookingId: booking._id,
+      amount: price,
+    });
 
     const title = '🎉 Booking Completed';
     const body = `Your booking with ${booking.taskerId.fullName} has been marked as completed.`;
@@ -266,12 +279,13 @@ const markAsCompleted = async (req, res) => {
       type: 'booking',
     });
 
-    res.status(200).json({ message: 'Booking marked as completed', booking });
+    res.status(200).json({ message: 'Booking marked as completed and earning recorded', booking });
   } catch (error) {
     console.error('Mark complete failed:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 };
+
 
 const getTaskerBookingSummary = async (req, res) => {
   try {
