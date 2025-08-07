@@ -18,6 +18,7 @@ router.put('/update-avatar', upload.single('image'), updateTaskerAvatar);
 
 router.post(
   '/upload',
+  verifyToken,
   upload.single('certificate'),
   taskerProfileController.uploadCertificate
 );

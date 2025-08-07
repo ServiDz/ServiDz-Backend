@@ -79,9 +79,14 @@ exports.updateTaskerAvatar = async (req, res) => {
 
 exports.uploadCertificate = async (req, res) => {
   try {
-    const { taskerId, description } = req.body;
+    // Extract taskerId from the authenticated user
+    const { taskerId } = req.user;
+    const { description } = req.body;
     const file = req.file;
 
+    console.log('Received request to upload certificate:', { taskerId, description });
+
+    // Validate taskerId and file
     if (!taskerId || !file) {
       return res.status(400).json({ message: 'Missing taskerId or file' });
     }
@@ -92,6 +97,7 @@ exports.uploadCertificate = async (req, res) => {
       uploadedAt: new Date(),
     };
 
+    // Update the tasker's certifications
     const updatedTasker = await Tasker.findByIdAndUpdate(
       taskerId,
       { $push: { certifications: newCertificate } },
@@ -106,12 +112,13 @@ exports.uploadCertificate = async (req, res) => {
       message: 'Certificate uploaded and added successfully',
       certifications: updatedTasker.certifications,
     });
+    console.log('Certificate uploaded successfully:', newCertificate);
   } catch (error) {
-    console.error('Upload error:', error); // ✅ proper logging
-
+    console.error('Upload error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
+
 
 
 // GET /api/tasker/certifications
