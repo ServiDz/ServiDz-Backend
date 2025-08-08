@@ -268,7 +268,7 @@ const markAsCompleted = async (req, res) => {
     const body = `Your booking with ${booking.taskerId.fullName} has been marked as completed.`;
 
     if (booking.userId.fcmToken) {
-      await sendNotification(booking.userId.fcmToken, title, body);
+      await sendNotification(booking.userId.fcmToken, title, body,  { type: 'rate_tasker' });
     }
 
     await Notification.create({
@@ -276,7 +276,7 @@ const markAsCompleted = async (req, res) => {
       userModel: 'User',
       title,
       body,
-      type: 'booking',
+      type: 'rate_tasker',
     });
 
     res.status(200).json({ message: 'Booking marked as completed and earning recorded', booking });
