@@ -4,6 +4,7 @@ const upload = require("../middleware/cloudinaryUpload");
 const taskerProfileController = require("../controllers/taskerProfileController");
 const { updateTaskerAvatar } = require("../controllers/taskerProfileController");
 const verifyToken = require('../middleware/verifyToken');
+const { verify } = require("crypto");
 
 
 // GET Tasker profile
@@ -35,6 +36,8 @@ router.post('/rate', taskerProfileController.addOrUpdateRating);
 
 router.get('/:taskerId/ratings', taskerProfileController.getTaskerRating);
 
-
+router.put('/update-name',  taskerProfileController.updateTaskerName);
+router.put('/update-location', taskerProfileController.updateTaskerLocation);
+router.put('/update-phone', taskerProfileController.updateTaskerPhone);
 
 module.exports = router;

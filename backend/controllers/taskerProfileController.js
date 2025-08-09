@@ -1,6 +1,7 @@
 const Tasker = require("../models/Tasker");
 
 
+
 // GET /api/tasker/profile
 exports.getTaskerProfile = async (req, res) => {
   try {
@@ -252,5 +253,94 @@ exports.getTaskerRating = async (req, res) => {
 
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+};
+
+exports.updateTaskerName = async (req, res) => {
+  const { name, taskerId } = req.body;
+
+  if (!taskerId) {
+    return res.status(400).json({ message: 'Tasker ID is required' });
+  }
+
+  if (!name) {
+    return res.status(400).json({ message: 'Name is required' });
+  }
+
+  try {
+    const updatedTasker = await Tasker.findByIdAndUpdate(
+      taskerId,
+        { fullName: name },
+      { new: true, runValidators: true }
+    ).select('-password');
+
+    if (!updatedTasker) {
+      return res.status(404).json({ message: 'Tasker not found' });
+    }
+
+    res.status(200).json({ message: 'Name updated successfully', tasker: updatedTasker });
+  } catch (error) {
+    console.error('Error updating name:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Update Tasker Location
+exports.updateTaskerLocation = async (req, res) => {
+  const { location, taskerId } = req.body;
+
+  if (!taskerId) {
+    return res.status(400).json({ message: 'Tasker ID is required' });
+  }
+
+  if (!location) {
+    return res.status(400).json({ message: 'Location is required' });
+  }
+
+  try {
+    const updatedTasker = await Tasker.findByIdAndUpdate(
+      taskerId,
+      { location },
+      { new: true, runValidators: true }
+    ).select('-password');
+
+    if (!updatedTasker) {
+      return res.status(404).json({ message: 'Tasker not found' });
+    }
+
+    res.status(200).json({ message: 'Location updated successfully', tasker: updatedTasker });
+  } catch (error) {
+    console.error('Error updating location:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Update Tasker Phone
+exports.updateTaskerPhone = async (req, res) => {
+  const { phoneNumber, taskerId } = req.body;
+
+  if (!taskerId) {
+    return res.status(400).json({ message: 'Tasker ID is required' });
+  }
+
+  if (!phoneNumber) {
+    return res.status(400).json({ message: 'Phone number is required' });
+  }
+
+  try {
+    const updatedTasker = await Tasker.findByIdAndUpdate(
+      taskerId,
+      { phone: phoneNumber },
+      { new: true, runValidators: true }
+    ).select('-password');
+
+    if (!updatedTasker) {
+      return res.status(404).json({ message: 'Tasker not found' });
+    }
+
+    res.status(200).json({ message: 'Phone number updated successfully', tasker: updatedTasker });
+  } catch (error) {
+    console.error('Error updating phone number:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
