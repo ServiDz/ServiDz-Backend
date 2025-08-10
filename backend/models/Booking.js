@@ -41,6 +41,12 @@ const bookingSchema = new mongoose.Schema(
       enum: ['pending', 'accepted', 'rejected', 'completed', 'cancelled'], 
       default: 'pending',
     },
+     earning: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Earning',
+    required: false, // explicitly optional
+    default: null
+  },
   },
   {
     timestamps: true, 

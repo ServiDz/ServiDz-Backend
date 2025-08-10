@@ -274,6 +274,7 @@ const markAsCompleted = async (req, res) => {
     await Notification.create({
       userId: booking.userId._id,
       userModel: 'User',
+
       title,
       body,
       type: 'rate_tasker',
@@ -311,14 +312,73 @@ const getTaskerBookingSummary = async (req, res) => {
   }
 };
 
+const getSchedule = async (req, res) => {
+  const { taskerId } = req.params; 
+
+  if (!taskerId) {
+    return res.status(400).json({ success: false, message: 'taskerId is required' });
+  }
+
+  try {
+    const bookings = await Booking.find(
+      { status: 'accepted', taskerId },  // Filter by accepted status AND taskerId
+      'date description'                  // Select only date and description fields
+    ).sort({ date: 1 });                  // Sort by date ascending
+
+    res.status(200).json({ success: true, bookings });
+  } catch (error) {
+    console.error('Error fetching schedule:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+const getUserBookings = async (req, res) => {
+  try {
+    console.log('📌 getUserBookings called');
+    console.log('🔑 req.user:', req.user);
+
+    const { userId } = req.user;
+    if (!userId) {
+      console.warn('⚠️ Missing userId in req.user');
+      return res.status(400).json({ message: 'User ID is missing' });
+    }
+
+    console.log(`📥 Fetching bookings for userId: ${userId}`);
+
+    const bookings = await Booking.find({ userId })
+      .sort({ createdAt: -1 })
+      .populate({
+        path: 'earning',
+        match: { status: 'completed' },
+      })
+      .populate({
+        path: 'taskerId',
+        select: 'fullName profilePic', // select only needed fields (adjust as needed)
+      });
+
+    console.log(`✅ Found ${bookings.length} bookings`);
+    res.status(200).json(bookings);
+
+  } catch (error) {
+    console.error('❌ Error fetching bookings:', error);
+    console.error('🛠 Stacktrace:', error.stack);
+    res.status(500).json({ message: 'Server error while fetching bookings', error: error.message });
+  }
+};
+
+
+
+
 
 module.exports = {
   createBooking,
   getBookingsByUserId,
+  getSchedule,
   acceptBooking,
   rejectBooking,
   getTaskerBookings,
   getNextJob,
   markAsCompleted,
   getTaskerBookingSummary,
+  getUserBookings
 };
