@@ -48,13 +48,46 @@ exports.createTasker = async (req, res) => {
 };
 
 
+
+
 // Get all taskers
 exports.getAllTaskers = async (req, res) => {
   try {
-    const taskers = await Tasker.find();
-    res.status(200).json(taskers);
+    const taskers = await Tasker.find().select(
+      'fullName profession rating ratings profilePic description'
+    );
+    
+    // Format the data to match frontend expectations
+    const formattedTaskers = taskers.map(tasker => ({
+      name: tasker.fullName,
+      profileImage: tasker.profilePic || 'https://randomuser.me/api/portraits/men/1.jpg', // default image
+      rating: tasker.rating || 0,
+      reviews: tasker.ratings?.length || 0,
+      skills: tasker.profession,
+      description: tasker.description || '',
+    }));
+
+    res.status(200).json(formattedTaskers);
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+};
+
+exports.getTopRatedTaskers = async (req, res) => {
+  try {
+    console.log('📌 getTopRatedTaskers called');
+
+    // Sort taskers by rating in descending order
+    const taskers = await Tasker.find()
+      .sort({ rating: -1, reviews: -1 }) // first by rating, then reviews
+      .limit(10); // limit results (you can change this)
+
+    console.log('📊 Top Rated Taskers:', taskers);
+
+    return res.status(200).json(taskers);
+  } catch (error) {
+    console.error('❌ Error in getTopRatedTaskers:', error);
+    res.status(500).json({ message: 'Server error while fetching top rated taskers' });
   }
 };
 

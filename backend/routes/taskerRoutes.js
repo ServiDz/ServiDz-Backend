@@ -15,6 +15,7 @@ router.post(
 
 // Route to get all taskers
 router.get('/all', taskerController.getAllTaskers);
+router.get('/top-rated', taskerController.getTopRatedTaskers);
 
 // Get a tasker by ID
 router.post('/getById', taskerController.getTaskerByIdFromBody);
