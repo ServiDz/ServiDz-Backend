@@ -17,6 +17,7 @@ const notificationRoutes = require('./routes/notificationRoutes');
 const taskerMessagesRoutes = require('./routes/taskerMessages');
 const settingsRoutes = require('./routes/settingsRoutes');
 const earningRoutes = require('./routes/earningRoutes');
+const aiRoutes = require('./routes/aiRoutes'); // Import AI routes
 
 
 
@@ -58,6 +59,8 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/tasker-messages', taskerMessagesRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/earnings', earningRoutes);
+app.use("/api/ai", aiRoutes);
+
 
 
 
