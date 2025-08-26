@@ -55,7 +55,7 @@ exports.getAllTaskers = async (req, res) => {
   try {
     // Get all taskers from the database
     const taskers = await Tasker.find().select(
-      'fullName profession rating ratings profilePic description createdAt'
+      'fullName profession status rating ratings profilePic description createdAt'
     );  
 
     // Format the data to match frontend expectations
@@ -65,6 +65,7 @@ exports.getAllTaskers = async (req, res) => {
       profileImage: tasker.profilePic || 'https://randomuser.me/api/portraits/men/1.jpg', // default image
       rating: tasker.rating || 0,
       reviews: tasker.ratings?.length || 0,
+      status: tasker.status || 'Active',
       skills: tasker.profession,
       description: tasker.description || '',
       joinDate: tasker.createdAt ? tasker.createdAt.toISOString() : null, // Add joinDate

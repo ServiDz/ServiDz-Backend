@@ -1,8 +1,11 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 
-
 const adminSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    default: "admin",
+  },
   email: {
     type: String,
     required: true,
@@ -17,6 +20,9 @@ const adminSchema = new mongoose.Schema({
   role: {
     type: String,
     default: "admin",
+  },
+  avatar: {
+    type: String, // store Cloudinary URL
   }
 }, { timestamps: true });
 
