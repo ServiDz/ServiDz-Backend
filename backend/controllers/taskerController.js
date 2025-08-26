@@ -48,15 +48,12 @@ exports.createTasker = async (req, res) => {
 };
 
 
-
-
-// Get all taskers
 exports.getAllTaskers = async (req, res) => {
   try {
+    // Get all taskers from the database
     const taskers = await Tasker.find().select(
-      'fullName profession rating ratings profilePic description'
-    );
-    
+      'fullName profession rating ratings profilePic description createdAt'
+    );  
     // Format the data to match frontend expectations
     const formattedTaskers = taskers.map(tasker => ({
       name: tasker.fullName,
@@ -65,13 +62,15 @@ exports.getAllTaskers = async (req, res) => {
       reviews: tasker.ratings?.length || 0,
       skills: tasker.profession,
       description: tasker.description || '',
+      joinDate: tasker.createdAt ? tasker.createdAt.toISOString() : null, // Add joinDate
     }));
-
     res.status(200).json(formattedTaskers);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
+
+
 
 exports.getTopRatedTaskers = async (req, res) => {
   try {

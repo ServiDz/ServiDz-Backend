@@ -19,6 +19,8 @@ const settingsRoutes = require('./routes/settingsRoutes');
 const earningRoutes = require('./routes/earningRoutes');
 const aiRoutes = require('./routes/aiRoutes'); // Import AI routes
 const adminRoutes = require("./routes/adminRoutes");
+const dashboardRoutes = require("./routes/dashboardRoutes");
+const userRoutes = require('./routes/usersRoutes');
 
 
 
@@ -61,9 +63,11 @@ app.use('/api/tasker-messages', taskerMessagesRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/earnings', earningRoutes);
 app.use("/api/ai", aiRoutes);
+
+// Admin Routes
 app.use("/api/admin", adminRoutes);
-
-
+app.use("/api/dashboard", dashboardRoutes);
+app.use('/api/users', userRoutes);
 
 
 

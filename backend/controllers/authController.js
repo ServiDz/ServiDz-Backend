@@ -144,23 +144,43 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
+    // ✅ Check if user is suspended
+    if (user.status === 'Suspended') {
+      // Send notification if FCM token exists
+      if (user.fcmToken) {
+        const title = '⚠️ Account Suspended';
+        const body = 'Your account has been suspended. Please contact support.';
+
+        await sendNotification(user.fcmToken, title, body);
+
+        await Notification.create({
+          userId: user._id,
+          userModel: role === 'tasker' ? 'Tasker' : 'User',
+          title,
+          body,
+          type: 'suspension'
+        });
+      }
+
+      return res.status(403).json({ message: 'Your account has been suspended. Please contact support.' });
+    }
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-   const accessToken = generateAccessToken({
-  userId: role === 'user' ? user._id : null,
-  taskerId: role === 'tasker' ? user._id : null,
-  role
-});
+    const accessToken = generateAccessToken({
+      userId: role === 'user' ? user._id : null,
+      taskerId: role === 'tasker' ? user._id : null,
+      role
+    });
 
-const refreshToken = generateRefreshToken({
-  userId: role === 'user' ? user._id : null,
-  taskerId: role === 'tasker' ? user._id : null,
-  role
-});
-
+    const refreshToken = generateRefreshToken({
+      userId: role === 'user' ? user._id : null,
+      taskerId: role === 'tasker' ? user._id : null,
+      role
+    });
 
     user.refreshToken = refreshToken;
     if (fcmToken) {
@@ -191,6 +211,8 @@ const refreshToken = generateRefreshToken({
     res.status(500).json({ message: 'Login failed' });
   }
 };
+
+
 
 // REFRESH TOKEN
 exports.refreshToken = async (req, res) => {
