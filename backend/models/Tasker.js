@@ -33,6 +33,11 @@ ratings: [
   refreshToken: { type: String },                       
   createdAt: { type: Date, default: Date.now },
   fcmToken: { type: String },
+   status: {
+        type: String,
+        enum: ['Active', 'Inactive', 'Suspended'],
+        default: 'Active'
+    }
 
 });
 

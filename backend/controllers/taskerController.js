@@ -1,4 +1,7 @@
 const Tasker = require('../models/Tasker');
+const admin = require('firebase-admin'); // for sending notifications via FCM
+const Notification = require('../models/Notification');
+const { sendNotification } = require('../utils/fcm');
 
 // Add a new tasker
 exports.createTasker = async (req, res) => {
@@ -54,8 +57,10 @@ exports.getAllTaskers = async (req, res) => {
     const taskers = await Tasker.find().select(
       'fullName profession rating ratings profilePic description createdAt'
     );  
+
     // Format the data to match frontend expectations
     const formattedTaskers = taskers.map(tasker => ({
+      id: tasker._id, // Add the id
       name: tasker.fullName,
       profileImage: tasker.profilePic || 'https://randomuser.me/api/portraits/men/1.jpg', // default image
       rating: tasker.rating || 0,
@@ -64,6 +69,7 @@ exports.getAllTaskers = async (req, res) => {
       description: tasker.description || '',
       joinDate: tasker.createdAt ? tasker.createdAt.toISOString() : null, // Add joinDate
     }));
+
     res.status(200).json(formattedTaskers);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -108,6 +114,42 @@ exports.getTaskerByIdFromBody = async (req, res) => {
     res.status(200).json(tasker);
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+};
+
+exports.banTasker = async (req, res) => {
+  try {
+    const { taskerId } = req.params;
+    const tasker = await Tasker.findById(taskerId);
+    if (!tasker) return res.status(404).json({ message: 'Tasker not found' });
+
+    // Update status to Suspended
+    tasker.status = 'Suspended';
+    await tasker.save();
+
+    // Save notification
+    await Notification.create({
+      userId: tasker._id,
+      userModel: 'Tasker',
+      title: 'Account Suspended',
+      body: 'Your account has been suspended by the admin.',
+      type: 'suspension'
+    });
+
+    // Send FCM
+    if (tasker.fcmToken) {
+      await sendNotification(
+        tasker.fcmToken,
+        'Account Suspended',
+        'Your account has been suspended by the admin.',
+        { type: 'suspension' }
+      );
+    }
+
+    res.status(200).json({ message: 'Tasker banned successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server Error' });
   }
 };
 
