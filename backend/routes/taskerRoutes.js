@@ -20,5 +20,6 @@ router.get('/top-rated', taskerController.getTopRatedTaskers);
 // Get a tasker by ID
 router.post('/getById', taskerController.getTaskerByIdFromBody);
 router.put('/ban-tasker/:taskerId', taskerController.banTasker);
+router.put('/activate-tasker/:taskerId', taskerController.activateTasker);
 
 module.exports = router;

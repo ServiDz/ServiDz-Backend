@@ -76,9 +76,46 @@ const banUser = async (req, res) => {
   }
 };
 
+// Activate user
+const activateUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    user.status = 'Active';
+    await user.save();
+
+    // Save notification
+    await Notification.create({
+      userId: user._id,
+      userModel: 'User',
+      title: 'Account Activated',
+      body: 'Your account has been activated by the admin.',
+      type: 'activation'
+    });
+
+    // Send FCM
+    if (user.fcmToken) {
+      await sendNotification(
+        user.fcmToken,
+        'Account Activated',
+        'Your account has been activated by the admin.',
+        { type: 'activation' }
+      );
+    }
+
+    res.status(200).json({ message: 'User activated successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
 
 module.exports = {
     getAllUsers,
     deleteUser,
-    banUser
+    banUser,
+    activateUser
 };

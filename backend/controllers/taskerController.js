@@ -155,3 +155,40 @@ exports.banTasker = async (req, res) => {
 };
 
 
+// Activate tasker
+exports.activateTasker = async (req, res) => {
+  try {
+    const { taskerId } = req.params;
+    const tasker = await Tasker.findById(taskerId);
+    if (!tasker) return res.status(404).json({ message: 'Tasker not found' });
+
+    // Update status to Active
+    tasker.status = 'Active';
+    await tasker.save();
+
+    // Save notification
+    await Notification.create({
+      userId: tasker._id,
+      userModel: 'Tasker',
+      title: 'Account Activated',
+      body: 'Your account has been activated by the admin.',
+      type: 'activation'
+    });
+
+    // Send FCM
+    if (tasker.fcmToken) {
+      await sendNotification(
+        tasker.fcmToken,
+        'Account Activated',
+        'Your account has been activated by the admin.',
+        { type: 'activation' }
+      );
+    }
+
+    res.status(200).json({ message: 'Tasker activated successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
