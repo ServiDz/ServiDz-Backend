@@ -21,6 +21,8 @@ const aiRoutes = require('./routes/aiRoutes'); // Import AI routes
 const adminRoutes = require("./routes/adminRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const userRoutes = require('./routes/usersRoutes');
+const analyticsRoute = require('./routes/analyticsRoute');
+
 
 
 
@@ -69,7 +71,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use('/api/users', userRoutes);
 
-
+app.use("/api/analytics", analyticsRoute)
 
 // Start server
 const PORT = process.env.PORT || 5000;

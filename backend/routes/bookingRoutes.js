@@ -1,7 +1,7 @@
 // routes/bookingRoutes.js
 const express = require('express');
 const router = express.Router();
-const { createBooking, getBookingsByUserId , acceptBooking , rejectBooking , getTaskerBookings, getNextJob,markAsCompleted,getTaskerBookingSummary, getSchedule, getUserBookings } = require('../controllers/bookingController');
+const { createBooking, getBookingsByUserId , acceptBooking , rejectBooking , getTaskerBookings, getNextJob,markAsCompleted,getTaskerBookingSummary, getSchedule, getUserBookings,getAllBookings } = require('../controllers/bookingController');
 const { verify } = require('crypto');
 const verifyToken = require('../middleware/verifyToken');
 
@@ -18,5 +18,6 @@ router.get('/:taskerId/summary', getTaskerBookingSummary);
 router.patch('/:id/complete', markAsCompleted);
 router.get('/schedule/:taskerId', getSchedule);
 router.get('/userBookings', verifyToken, getUserBookings);
-
+// ✅ Admin route to get all bookings with populated data and earnings
+router.get('/all', getAllBookings);
 module.exports = router;

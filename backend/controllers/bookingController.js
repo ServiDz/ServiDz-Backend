@@ -368,6 +368,52 @@ const getUserBookings = async (req, res) => {
 
 
 
+ const getAllBookings = async (req, res) => {
+  try {
+    // Fetch all bookings and populate tasker info
+    const bookings = await Booking.find().populate("taskerId", "fullName profilePic");
+
+    // For each booking, attach earning if completed
+    const formatted = await Promise.all(
+      bookings.map(async (b) => {
+        let earning = 0;
+
+        if (b.status === "completed") {
+          const foundEarning = await Earning.findOne({ bookingId: b._id });
+          earning = foundEarning ? foundEarning.amount : 0;
+        }
+
+        return {
+          _id: b._id,
+          userId: b.userId,
+          tasker: b.taskerId
+            ? {
+                name: b.taskerId.fullName,
+                profilePic: b.taskerId.profilePic,
+              }
+            : null,
+          location: b.location,
+          date: b.date,
+          time: b.time,
+          description: b.description,
+          status: b.status,
+          createdAt: b.createdAt,
+          updatedAt: b.updatedAt,
+          earnings: earning, // ✅ pulled from Earning model
+        };
+      })
+    );
+
+    res.status(200).json(formatted);
+  } catch (error) {
+    console.error("Error fetching all bookings:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+
+
 
 
 module.exports = {
@@ -380,5 +426,6 @@ module.exports = {
   getNextJob,
   markAsCompleted,
   getTaskerBookingSummary,
-  getUserBookings
+  getUserBookings,
+  getAllBookings
 };

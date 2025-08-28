@@ -1,6 +1,7 @@
 const Admin = require("../models/Admin");
 const jwt = require("jsonwebtoken");
 const cloudinary = require("../config/cloudinary");
+const Tasker = require("../models/Tasker");
 
 // Generate token with admin ID
 const generateToken = (admin) => {
