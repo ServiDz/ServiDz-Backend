@@ -10,4 +10,4 @@ const tempTaskerSchema = new mongoose.Schema({
   phone: String,
 });
 
-module.exports = mongoose.model('TempTasker', tempTaskerSchema);
+module.exports = mongoose.models.TempTasker || mongoose.model("TempTasker", tempTaskerSchema);
